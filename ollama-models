@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+
+require 'nokogiri'
+require 'open-uri'
+
+def list_of_models
+  html = open('https://ollama.ai/library').read
+  doc = Nokogiri::HTML(html)
+
+  data = {}
+
+  doc.search('//div[@id="repo"]/ul/li').each do |li|
+    name = li.search('h2').first.content.strip
+    desc = li.search('p').first.content.strip
+    data[name] = desc
+  end
+
+  data
+end
+
+def list_of_tags(model)
+  url = "https://ollama.ai/library/#{model}/tags"
+  html = open(url).read
+  doc = Nokogiri::HTML(html)
+
+  tags = []
+
+  doc.search('//section/div/div/a').each do |a|
+    tag = a.search('div').first.content.strip
+    next if tag.include?('-q')
+    next if tag.include?('-fp')
+
+    size = a.search('div/span').first.content.strip.split(/\s+/).first
+    tags << [tag, size]
+  end
+
+  puts "All tags for #{model}"
+  puts
+
+  max_tag = tags.map { |i| i[0].size }.max
+  max_size = tags.map { |i| i[1].size }.max
+
+  puts "%-#{max_tag}s   %#{max_size}s" % ['Tag', 'Size']
+  puts "%-#{max_tag}s   %#{max_size}s" % ['-' * max_tag, '-' * max_size]
+
+  tags.each do |tag, size|
+    puts "%-#{max_tag}s   %#{max_size}s" % [tag, size]
+  end
+end
+
+def display_models(data)
+  max_name = data.keys.map(&:size).max
+  max_desc = data.values.map(&:size).max
+  puts "%-#{max_name}s %s" % ['Name', 'Description']
+  puts "%-#{max_name}s %s" % ['-' * max_name, '-' * max_desc]
+
+  data.sort.each do |k, v|
+    puts "%-#{max_name}s %s" % [k, v]
+  end
+end
+
+find_this = ARGV.shift
+
+data = list_of_models
+
+if find_this.nil?
+  display_models(data)
+elsif data.key?(find_this)
+  list_of_tags(find_this)
+else
+  puts "No model named [#{find_this}] available"
+  exit 1
+end
