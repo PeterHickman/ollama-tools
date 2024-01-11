@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+
+`ollama list`.split("\n").sort.each do |line|
+  next if line.start_with?('NAME')
+
+  name, mid, size, _ = line.split("\t").map(&:strip)
+
+  puts "==> #{name} (#{size.gsub(/\s+/, '')})".bold
+
+  r = system("ollama pull #{name}")
+  next if  r
+
+  puts 'Error'.red
+  puts
+end
