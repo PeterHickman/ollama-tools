@@ -18,7 +18,7 @@ def list_of_models
   data
 end
 
-def list_of_tags(model)
+def list_of_tags(model, all_tags)
   url = "https://ollama.ai/library/#{model}/tags"
   html = open(url).read
   doc = Nokogiri::HTML(html)
@@ -27,8 +27,8 @@ def list_of_tags(model)
 
   doc.search('//section/div/div/a').each do |a|
     tag = a.search('div').first.content.strip
-    next if tag.include?('-q')
-    next if tag.include?('-fp')
+    next if tag.include?('-q') && all_tags == false
+    next if tag.include?('-fp') && all_tags == false
 
     size = a.search('div/span').first.content.strip.split(/\s+/).first
     tags << [tag, size]
@@ -59,14 +59,23 @@ def display_models(data)
   end
 end
 
-find_this = ARGV.shift
+args = ARGV.dup
+
+if args.include?('--all')
+  all_tags = true
+  args.delete('--all')
+else
+  all_tags = false
+end
+
+find_this = args.shift
 
 data = list_of_models
 
 if find_this.nil?
   display_models(data)
 elsif data.key?(find_this)
-  list_of_tags(find_this)
+  list_of_tags(find_this, all_tags)
 else
   puts "No model named [#{find_this}] available"
   exit 1
