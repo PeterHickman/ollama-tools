@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+for FILE in ollama-*
+do
+  echo Installing ${FILE}
+  install -m 0755 ${FILE} /usr/local/bin/
+done
