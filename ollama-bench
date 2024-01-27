@@ -30,15 +30,11 @@ def models(uri)
 end
 
 def one_query(uri, model, prompt)
-  json = ''
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.read_timeout = 120 # seconds
 
-  Net::HTTP.start(uri.host, uri.port) do |http|
-    req = Net::HTTP::Post.new(uri.request_uri)
-    req.body = '{"model": "' + model + '", "prompt": "' + prompt + '", "stream": false}'
-    req.content_type = 'application/json'
-
-    json = http.request(req).body
-  end
+  data = { 'model' => model, 'prompt' => prompt, 'stream' => false }
+  json = http.request_post(uri.path, JSON.generate(data)).body
 
   data = JSON.parse(json)
   data.delete('created_at')
