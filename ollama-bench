@@ -31,9 +31,9 @@ end
 
 def one_query(uri, model, prompt)
   http = Net::HTTP.new(uri.host, uri.port)
-  http.read_timeout = 120 # seconds
+  http.read_timeout = 300 # seconds
 
-  data = { 'model' => model, 'prompt' => prompt, 'stream' => false }
+  data = { 'model' => model, 'prompt' => prompt, 'stream' => false, 'keep_alive' => 0 }
   json = http.request_post(uri.path, JSON.generate(data)).body
 
   data = JSON.parse(json)
