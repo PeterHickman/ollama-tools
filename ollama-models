@@ -25,12 +25,12 @@ def list_of_tags(model, all_tags)
 
   tags = []
 
-  doc.search('//section/div/div/a').each do |a|
+  doc.search('//a[@class="group"]').each do |a|
     tag = a.search('div').first.content.strip
     next if tag.include?('-q') && all_tags == false
     next if tag.include?('-fp') && all_tags == false
 
-    size = a.search('div/span').first.content.strip.split(/\s+/).first
+    size = a.search('div/span').first.content.strip.split(/\s+/).select { |x| x =~ /^\d+.*B$/ }.first
     tags << [tag, size]
   end
 
@@ -80,3 +80,4 @@ else
   puts "No model named [#{find_this}] available"
   exit 1
 end
+
