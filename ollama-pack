@@ -1,0 +1,112 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'zip'
+
+require 'colorize'
+
+class ZipArch
+  def initialize(m, manifests, blobs)
+    @m = m
+    @manifests = manifests
+    @blobs = blobs
+
+    process
+  end
+
+  private
+
+  def process
+    zipfile_name = "#{@m.gsub(':', '_')}.zip"
+
+    if File.exist?(zipfile_name)
+      puts "#{zipfile_name} already exists, halting".red
+      exit 1
+    end
+
+    puts "==> Creating #{zipfile_name}".bold
+
+    @allread_added = []
+
+    Zip::File.open(zipfile_name, create: true) do |zipfile|
+      x = JSON.parse(open(@manifests[@m]).read)
+
+      parts = @manifests[@m].split('/')[-4..-1].join('/')
+      add_file(zipfile, parts, @manifests[@m])
+
+      add_file(zipfile, x['config']['digest'], @blobs[x['config']['digest']])
+      x['layers'].each do |l|
+        add_file(zipfile, l['digest'], @blobs[l['digest']])
+      end
+    end
+  end
+
+  def add_file(zipfile, name, content)
+    if @allread_added.include?(name)
+      puts "    dupilcate #{name}".yellow
+    else
+      puts "    adding #{name.blue}"
+      zipfile.add(name, content)
+      zipfile.commit
+      @allread_added << name
+    end
+  end
+end
+
+def walk(path)
+  l = []
+
+  Dir[path].each do |filename|
+    if File.directory?(filename)
+      l += walk("#{filename}/*")
+    else
+      l << filename
+    end
+  end
+
+  l
+end
+
+def gather_info
+  root = File.expand_path('~/.ollama/*')
+  all_files = walk(root)
+
+  manifests = {}
+  blobs = {}
+
+  all_files.each do |filename|
+    if filename.include?('/manifests/')
+      parts = filename.split('/')
+      k = "#{parts[-2]}:#{parts[-1]}"
+      manifests[k] = filename
+    elsif filename.include?('/blobs/')
+      k = filename.split('/').last
+      blobs[k] = filename
+    end
+  end
+
+  [manifests, blobs]
+end
+
+manifests, blobs = gather_info
+
+case ARGV.size
+when 0
+  puts '==> Models that can be packed'.bold
+  if manifests.any?
+    manifests.keys.sort.each do |m|
+      puts "    #{m}".green
+    end
+  else
+    puts '   There are no models installed'.red
+  end
+when 1
+  m = ARGV.shift
+  unless manifests.key?(m)
+    puts "Unknown model [#{m}]".red
+    exit 1
+  end
+
+  ZipArch.new(m, manifests, blobs)
+end

@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require 'zip'
+
+BLOCK = 1024 * 1024 * 128
+
+home = File.expand_path('~/.ollama')
+unless File.exists?(home)
+  puts "#{home} is missing".red
+  exit 1
+end
+
+blobs = "#{home}/models/blobs"
+unless File.exists?(blobs)
+  puts "#{blobs} is missing".red
+  exit 1
+end
+
+manifests = "#{home}/models/manifests"
+# unless File.exists?(manifests)
+#   puts "#{manifests} is missing".red
+#   exit 1
+# end
+
+zipfile_name = ARGV.shift
+if zipfile_name.nil?
+  puts "No zipfile given".red
+  exit 1
+end
+
+unless File.exists?(zipfile_name)
+  puts "Cannot find [#{zipfile_name}]".red
+  exit 1
+end
+
+puts "==> Unpacking #{zipfile_name}".bold
+
+Zip::File.open(zipfile_name, create: false) do |zipfile|
+  zipfile.each do |entry|
+    puts "    extract #{entry.name.blue}"
+
+    if entry.name.start_with?('sha256:')
+      file = "#{blobs}/#{entry.name}"
+      f = File.new(file, 'wb')
+      s = entry.get_input_stream
+      loop do
+        b = s.read(BLOCK)
+        break if b.nil?
+        f.write(b)
+      end
+      f.close
+    else
+      path = "#{manifests}/#{File.dirname(entry.name)}"
+      FileUtils.mkdir_p(path)
+      file = "#{manifests}/#{entry.name}"
+      f = File.new(file, 'wb')
+      f.write(entry.get_input_stream.read)
+      f.close
+    end
+  end
+end
