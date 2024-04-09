@@ -30,7 +30,7 @@ def list_of_tags(model, all_tags)
     next if tag.include?('-q') && all_tags == false
     next if tag.include?('-fp') && all_tags == false
 
-    size = a.search('div/span').first.content.strip.split(/\s+/).select { |x| x =~ /^\d+.*B$/ }.first
+    size = a.next_element.content.strip.split(/\s+/).select { |x| x =~ /^\d+.*B$/ }.first
     tags << [tag, size]
   end
 
