@@ -25,12 +25,14 @@ def list_of_tags(model, all_tags)
 
   tags = []
 
-  doc.search('//a[@class="group"]').each do |a|
-    tag = a.search('div').first.content.strip
+  doc.search('//div[@class="flex-1"]').each do |div|
+    tag = div.search('div[1]').first.content.strip.split(/\s+/).first
+
     next if tag.include?('-q') && all_tags == false
     next if tag.include?('-fp') && all_tags == false
 
-    size = a.next_element.content.strip.split(/\s+/).select { |x| x =~ /^\d+.*B$/ }.first
+    size = div.search('div[2]/span').first.content.gsub(/\s+/, '').split("•")[1]
+
     tags << [tag, size]
   end
 
