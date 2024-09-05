@@ -83,3 +83,7 @@ magicoder:latest
 ```
 The config file is supplied with the `--config` option and the results written to the filename given with the `--report` option. The output is a weird serial JSON format
 
+
+## ollama-dump
+
+Dump a list of all the models and their tags and sizes as yaml

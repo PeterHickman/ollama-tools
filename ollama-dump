@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+require 'nokogiri'
+require 'open-uri'
+require 'uri'
+require 'yaml'
+
+def list_of_models
+  html = URI.open('https://ollama.ai/library').read
+  doc = Nokogiri::HTML(html)
+
+  data = []
+
+  doc.search('//div[@id="repo"]/ul/li').each do |li|
+    name = li.search('h2').first.content.strip
+    desc = li.search('p').first.content.strip
+    data << [name, desc]
+  end
+
+  data.sort
+end
+
+def list_of_tags(model)
+  html = URI.open("https://ollama.ai/library/#{model}/tags").read
+  doc = Nokogiri::HTML(html)
+
+  tags = {}
+
+  doc.search('//div[@class="flex-1"]').each do |div|
+    tag = div.search('div[1]').first.content.strip.split(/\s+/).first
+
+    next if tag.include?('-q')
+    next if tag.include?('-fp')
+
+    size = div.search('div[2]/span').first.content.gsub(/\s+/, '').split("•")[1]
+
+    tags[tag] = size
+  end
+
+  tags.delete('latest') if tags.size > 1 && tags.key?('latest')
+
+  tags
+end
+
+x = {}
+list_of_models.each do |(model, desc)|
+  x[model] = {'desc' => desc, 'tags' => list_of_tags(model)}
+end
+
+puts YAML.dump(x)
