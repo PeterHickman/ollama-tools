@@ -48,42 +48,6 @@ latest          24GB
 
 Go over the already installed models and make sure they are up to date
 
-## ollama-bench
-
-A tool to benchmark ollama. It requires a config file
-
-```yaml
-models:
-  - codellama:latest
-  - llama2:latest
-  - llava:latest
-  - magicoder:latest
-prompts:
-  - Why is the sky blue?
-  - You are an expert programmer that writes simple, concise code and explanations. Write a python function to generate the nth fibonacci number
-server: http://localhost:11434
-```
-
-It assumes that the models has been installed and that the server is running
-
-```bash
-$ ollama-bench --config bench.yaml --report results.json
-codellama:latest
-    Why is the sky blue?
-    You are an expert programmer that writes simple, concise code and explanations. Write a python function to generate the nth fibonacci number
-llama2:latest
-    Why is the sky blue?
-    You are an expert programmer that writes simple, concise code and explanations. Write a python function to generate the nth fibonacci number
-llava:latest
-    Why is the sky blue?
-    You are an expert programmer that writes simple, concise code and explanations. Write a python function to generate the nth fibonacci number
-magicoder:latest
-    Why is the sky blue?
-    You are an expert programmer that writes simple, concise code and explanations. Write a python function to generate the nth fibonacci number
-```
-The config file is supplied with the `--config` option and the results written to the filename given with the `--report` option. The output is a weird serial JSON format
-
-
 ## ollama-dump
 
 Dump a list of all the models and their tags and sizes as yaml
