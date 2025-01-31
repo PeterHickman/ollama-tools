@@ -42,9 +42,17 @@ def list_of_tags(model)
   tags
 end
 
-x = {}
+data = {}
 list_of_models.each do |(model, desc)|
-  x[model] = {'desc' => desc, 'tags' => list_of_tags(model)}
+  data[model] = {'desc' => desc, 'tags' => list_of_tags(model)}
 end
 
-puts YAML.dump(x)
+puts YAML.dump(data)
+
+puts
+
+data.each do |model, x|
+  x['tags'].each do |b, s|
+    puts "#{model}:#{b} # #{s}"
+  end
+end
