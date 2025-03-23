@@ -3,7 +3,7 @@
 require 'nokogiri'
 require 'open-uri'
 require 'uri'
-require 'yaml'
+require 'csv'
 
 def list_of_models
   html = URI.open('https://ollama.ai/library').read
@@ -32,9 +32,9 @@ def list_of_tags(model)
     next if tag.include?('-q')
     next if tag.include?('-fp')
 
-    size = div.search('div[2]/span').first.content.gsub(/\s+/, '').split("•")[1]
+    hash, size, _ = div.search('div[2]/span').first.content.gsub(/\s+/, '').split("•")
 
-    tags[tag] = size
+    tags[tag] = {size: size, hash: hash}
   end
 
   tags.delete('latest') if tags.size > 1 && tags.key?('latest')
@@ -47,12 +47,19 @@ list_of_models.each do |(model, desc)|
   data[model] = {'desc' => desc, 'tags' => list_of_tags(model)}
 end
 
-puts YAML.dump(data)
+m = File.open('models.csv', 'w')
+m.puts %w[model description].to_csv
 
-puts
+t = File.open('tags.csv', 'w')
+t.puts %w[model tag hash size].to_csv
 
 data.each do |model, x|
+  m.puts [model, x['desc']].to_csv
+
   x['tags'].each do |b, s|
-    puts "#{model}:#{b} # #{s}"
+    t.puts [model, b, s[:hash], s[:size]].join(',')
   end
 end
+
+m.close
+t.close
