@@ -5,23 +5,29 @@ require 'open-uri'
 require 'uri'
 require 'csv'
 
-def list_of_models
-  html = URI.open('https://ollama.ai/library').read
-  doc = Nokogiri::HTML(html)
+LIBRARIES = %w[library]
 
+def list_of_models
   data = []
 
-  doc.search('//div[@id="repo"]/ul/li').each do |li|
-    name = li.search('h2').first.content.strip
-    desc = li.search('p').first.content.strip
-    data << [name, desc]
+  LIBRARIES.each do |library|
+    puts "==> Checking #{library}"
+
+    html = URI.open("https://ollama.ai/#{library}").read
+    doc = Nokogiri::HTML(html)
+
+    doc.search('//div[@id="repo"]/ul/li').each do |li|
+      name = li.search('h2').first.content.strip
+      desc = li.search('p').first.content.strip
+      data << [library, name, desc]
+    end
   end
 
   data.sort
 end
 
-def list_of_tags(model)
-  html = URI.open("https://ollama.ai/library/#{model}/tags").read
+def list_of_tags(library, model)
+  html = URI.open("https://ollama.ai/#{library}/#{model}/tags").read
   doc = Nokogiri::HTML(html)
 
   tags = {}
@@ -43,8 +49,8 @@ def list_of_tags(model)
 end
 
 data = {}
-list_of_models.each do |(model, desc)|
-  data[model] = {'desc' => desc, 'tags' => list_of_tags(model)}
+list_of_models.each do |(library, model, desc)|
+  data[model] = {'desc' => desc, 'tags' => list_of_tags(library, model)}
 end
 
 m = File.open('models.csv', 'w')
