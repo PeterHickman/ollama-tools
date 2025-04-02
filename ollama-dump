@@ -27,6 +27,8 @@ def list_of_models
 end
 
 def list_of_tags(library, model)
+  puts "==> Tags for #{library}/#{model}"
+
   html = URI.open("https://ollama.ai/#{library}/#{model}/tags").read
   doc = Nokogiri::HTML(html)
 
