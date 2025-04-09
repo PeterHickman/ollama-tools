@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+
+unless File.exist?('tags.csv')
+  warn "We need a tags.csv from ollama-dump"
+  exit 1
+end
+
+from_tags = {}
+
+File.open('tags.csv', 'r').each do |line|
+  model, tag, hash, size = line.chomp.split(',')
+  from_tags["#{model}:#{tag}"] = hash
+end
+
+c = 0
+
+`ollama list`.split("\n").sort.each do |line|
+  next if line.include?('NAME')
+
+  model_tag, hash, _ = line.chomp.split(/\s+/, 4)
+  model_tag = model_tag.split('/').last if model_tag.include?('/')
+
+  if from_tags.key?(model_tag)
+    if from_tags[model_tag] == hash
+      # puts "#{model_tag.green} is up to date"
+    else
+      puts "#{model_tag.yellow} needs to be updated"
+      c += 1
+    end
+  else
+    puts "#{model_tag.red} not in the tags file"
+    c += 1
+  end
+end
+
+if c == 0
+  puts 'Everything is up to date'.green
+end
