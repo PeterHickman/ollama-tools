@@ -26,33 +26,41 @@ def list_of_models
   data.sort
 end
 
-def list_of_tags(library, model)
+def list_of_tags(library, model, debug)
   puts "==> Tags for #{library}/#{model}"
 
   html = URI.open("https://ollama.ai/#{library}/#{model}/tags").read
+
   doc = Nokogiri::HTML(html)
 
   tags = {}
 
-  doc.search('//div[@class="flex-1"]').each do |div|
-    tag = div.search('div[1]').first.content.strip.split(/\s+/).first
+  doc.search('//section/ul/li/a').each do |a|
+    tag = a.search('div/div/div/span').first.content
 
     next if tag.include?('-q')
     next if tag.include?('-fp')
 
-    hash, size, _ = div.search('div[2]/span').first.content.gsub(/\s+/, '').split("•")
+    if tag.include?(':')
+      tag = tag.split(':').last
+    else
+      tag = 'latest'
+    end
+
+    x = a.search('div/span/span').first.parent.text.strip.split('•').map(&:strip)
+    hash, size = x[0..1]
 
     tags[tag] = {size: size, hash: hash}
   end
 
-  # tags.delete('latest') if tags.size > 1 && tags.key?('latest')
-
   tags
 end
 
+debug = ARGV.include?('-d')
+
 data = {}
 list_of_models.each do |(library, model, desc)|
-  data[model] = {'desc' => desc, 'tags' => list_of_tags(library, model)}
+  data[model] = {'desc' => desc, 'tags' => list_of_tags(library, model, debug)}
 end
 
 m = File.open('models.csv', 'w')
