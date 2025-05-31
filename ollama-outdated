@@ -11,7 +11,7 @@ from_tags = {}
 
 File.open('tags.csv', 'r').each do |line|
   model, tag, hash, size = line.chomp.split(',')
-  from_tags[tag] = hash
+  from_tags[tag] = {hash: hash, size: size}
 end
 
 c = 0
@@ -23,10 +23,10 @@ c = 0
   model_tag = model_tag.split('/').last if model_tag.include?('/')
 
   if from_tags.key?(model_tag)
-    if from_tags[model_tag] == hash
+    if from_tags[model_tag][:hash] == hash
       # puts "#{model_tag.green} is up to date"
     else
-      puts "#{model_tag.yellow} needs to be updated"
+      puts "#{model_tag.yellow} needs to be updated (#{from_tags[model_tag][:size]})"
       c += 1
     end
   else
