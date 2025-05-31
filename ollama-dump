@@ -35,20 +35,14 @@ def list_of_tags(library, model, debug)
 
   tags = {}
 
-  doc.search('//section/ul/li/a').each do |a|
-    tag = a.search('div/div/div/span').first.content
+  doc.search('//span[@class="font-mono"]').each do |span|
+    a = span.parent.parent.parent
+    tag = a['href'].split('/').last
 
     next if tag.include?('-q')
     next if tag.include?('-fp')
 
-    if tag.include?(':')
-      tag = tag.split(':').last
-    else
-      tag = 'latest'
-    end
-
-    x = a.search('div/span/span').first.parent.text.strip.split('•').map(&:strip)
-    hash, size = x[0..1]
+    hash, size, _ = span.parent.content.gsub(/\s+/, ' ').strip.split(' • ', 3)
 
     tags[tag] = {size: size, hash: hash}
   end
