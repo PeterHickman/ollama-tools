@@ -11,7 +11,7 @@ from_tags = {}
 
 File.open('tags.csv', 'r').each do |line|
   model, tag, hash, size = line.chomp.split(',')
-  from_tags["#{model}:#{tag}"] = hash
+  from_tags[tag] = hash
 end
 
 c = 0
