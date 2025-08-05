@@ -95,6 +95,16 @@ else
 end
 puts
 
+partials = Hash.new(0)
+
+blob_list.each do |blob|
+  if blob.include?('-partial')
+    name = blob.split('-')[0]
+    partials[name] += 1
+    blob_list.delete(blob)
+  end
+end
+
 puts 'Unreferenced blobs'
 if blob_list.any?
   blob_list.each do |blob|
@@ -104,3 +114,12 @@ else
   puts '  None'
 end
 puts
+
+puts 'Partial blobs'
+if partials.any?
+  partials.each do |blob, count|
+    puts "  #{blob} * #{count}"
+  end
+else
+  puts '  None'
+end
