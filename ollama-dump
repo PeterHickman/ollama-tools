@@ -41,6 +41,7 @@ def list_of_tags(library, model, debug)
 
     next if tag.include?('-q')
     next if tag.include?('-fp')
+    next if tag.include?('-bf')
 
     hash, size, _ = span.parent.content.gsub(/\s+/, ' ').strip.split(' • ', 3)
 
