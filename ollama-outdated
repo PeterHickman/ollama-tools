@@ -2,10 +2,40 @@
 
 require 'colorize'
 
+def find_models
+  # OLLAMA_MODELS
+  path = ENV['OLLAMA_MODELS']
+  if path
+    e_path = File.expand_path(path)
+    return e_path if File.directory?(e_path)
+  end
+
+  # According to the OS
+  path = case RbConfig::CONFIG['host_os']
+         when /linux/
+           '/usr/share/ollama/.ollama/models'
+         when /darwin/
+           '~/.ollama/models'
+         when /mswin|mingw32|windows/
+           'C:\Users\%username%\.ollama\models'
+         else
+           raise "Dont know where the models are stored on #{RbConfig::CONFIG['host_os']}"
+         end
+
+  if path
+    e_path = File.expand_path(path)
+    return e_path if File.directory?(e_path)
+  end
+
+  raise "Model path [#{e_path}] is not available"
+end
+
 unless File.exist?('tags.csv')
   warn "We need a tags.csv from ollama-dump"
   exit 1
 end
+
+find_models
 
 from_tags = {}
 
