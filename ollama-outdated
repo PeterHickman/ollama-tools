@@ -35,7 +35,9 @@ unless File.exist?('tags.csv')
   exit 1
 end
 
-find_models
+e_path = find_models
+
+puts e_path
 
 from_tags = {}
 
