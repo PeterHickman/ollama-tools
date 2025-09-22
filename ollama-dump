@@ -51,8 +51,6 @@ def list_of_tags(library, model, debug)
   tags
 end
 
-find_models
-
 debug = ARGV.include?('-d')
 
 data = {}
