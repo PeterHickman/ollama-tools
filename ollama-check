@@ -64,6 +64,8 @@ Dir["#{ROOT}/manifests/**/*"].each do |filename|
 
   manifest_blobs << data['config']['digest'].split(':', 2).last
 
+  next if data['layers'].nil?
+
   data['layers'].each do |layer|
     manifest_blobs << layer['digest'].split(':', 2).last
   end
