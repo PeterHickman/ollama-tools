@@ -7,6 +7,8 @@ unless File.exist?('tags.csv')
   exit 1
 end
 
+bash_output = ARGV.include?('-s')
+
 from_tags = {}
 
 File.open('tags.csv', 'r').each do |line|
@@ -26,15 +28,19 @@ c = 0
     if from_tags[model_tag][:hash] == hash
       # puts "#{model_tag.green} is up to date"
     else
-      puts "#{model_tag.yellow} needs to be updated (#{from_tags[model_tag][:size]})"
+      if bash_output
+        puts "ollama pull #{model_tag}"
+      else
+        puts "#{model_tag.yellow} needs to be updated (#{from_tags[model_tag][:size]})"
+      end
       c += 1
     end
   else
-    puts "#{model_tag.red} not in the tags file"
+    puts "#{model_tag.red} not in the tags file" unless bash_output
     c += 1
   end
 end
 
 if c == 0
-  puts 'Everything is up to date'.green
+  puts 'Everything is up to date'.green unless bash_output
 end
