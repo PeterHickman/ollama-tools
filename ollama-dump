@@ -40,6 +40,7 @@ def list_of_tags(library, model)
     tag = a['href'].split('/').last
 
     next if tag.include?('-q')
+    next if tag.include?('-a')
     next if tag.include?('-fp')
     next if tag.include?('-bf')
     next if tag.include?('cloud')
