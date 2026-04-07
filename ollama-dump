@@ -58,7 +58,7 @@ end
 
 data = {}
 list_of_models.each do |(library, model, desc)|
-  full_model = library != 'library' ? "#{library}/#{model}" : model
+  full_model = library == 'library' ? model : "#{library}/#{model}"
 
   data[full_model] = {'desc' => desc, 'tags' => list_of_tags(library, model)}
 end
