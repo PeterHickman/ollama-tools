@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+
+# https://github.com/weimenglee/MigrateOllamaModels/blob/main/MigrateOllamaModels.py
+
+import os
+import json
+import shutil
+import argparse
+import sys
+
+
+def extract_digests(source_path, model, version):
+    # Expand tilde to full home directory path
+    source_path = os.path.expanduser(source_path)
+    # Construct the path to the version file
+    file_path = os.path.join(
+        source_path, "manifests", "registry.ollama.ai", "library", model, version
+    )
+
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        print(f"Error: The file '{file_path}' does not exist.")
+        return None
+
+    # Check if it's a file
+    if not os.path.isfile(file_path):
+        print(f"Error: '{file_path}' is not a file.")
+        return None
+
+    # Read and parse the JSON file
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Error: Failed to parse JSON in '{file_path}': {e}")
+        return None
+    except OSError as e:
+        print(f"Error: Unable to read file '{file_path}': {e}")
+        return None
+
+    # Extract all digest values recursively
+    digests = []
+
+    def find_digests(obj):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key == "digest":
+                    digests.append(value)
+                else:
+                    find_digests(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                find_digests(item)
+
+    find_digests(data)
+
+    return digests
+
+
+def copy_blobs(source_path, destination_root, digests):
+    # Paths for source and destination blobs
+    src_blobs = os.path.join(os.path.expanduser(source_path), "blobs")
+    dest_blobs = os.path.join(os.path.expanduser(destination_root), "blobs")
+
+    # Create destination blobs directory if it doesn't exist
+    os.makedirs(dest_blobs, exist_ok=True)
+
+    # Copy each blob file
+    for digest in digests:
+        # Replace 'sha256:' with 'sha256-' to match file naming convention
+        file_name = digest.replace("sha256:", "sha256-")
+        src_file = os.path.join(src_blobs, file_name)
+        dest_file = os.path.join(dest_blobs, file_name)
+
+        if os.path.exists(src_file):
+            try:
+                shutil.copy2(src_file, dest_file)
+                print(f"Copied: {file_name} to {dest_blobs}")
+            except OSError as e:
+                print(f"Error: Failed to copy '{src_file}' to '{dest_file}': {e}")
+        else:
+            print(f"Warning: Source file '{src_file}' does not exist.")
+
+
+def copy_version_and_create_model_folder(source_path, destination_root, model, version):
+    # Source and destination paths
+    source_path = os.path.expanduser(source_path)
+    destination_root = os.path.expanduser(destination_root)
+    src_model_dir = os.path.join(
+        source_path, "manifests", "registry.ollama.ai", "library", model
+    )
+    dest_model_dir = os.path.join(
+        destination_root, "manifests", "registry.ollama.ai", "library", model
+    )
+
+    # Create the destination manifests/registry.ollama.ai/library/<model> directory if it doesn't exist
+    os.makedirs(dest_model_dir, exist_ok=True)
+
+    # Copy the specified version file
+    src_version = os.path.join(src_model_dir, version)
+    dest_version = os.path.join(dest_model_dir, version)
+
+    if os.path.exists(src_version):
+        try:
+            shutil.copy2(src_version, dest_version)
+            print(f"Copied: '{version}' file to {dest_model_dir}")
+        except OSError as e:
+            print(f"Error: Failed to copy '{version}' file to '{dest_version}': {e}")
+    else:
+        print(f"Warning: '{version}' file not found in {src_model_dir}")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--source", help="source path of the Ollama models folder", type=str
+    )
+    parser.add_argument(
+        "--dest", help="destination path of the Ollama model folder", type=str
+    )
+    parser.add_argument("--model", help="name of the model", type=str)
+    args = parser.parse_args()
+
+    if args.source == None or args.dest == None or args.model == None:
+        parser.print_help()
+        sys.exit(1)
+
+    source_path = args.source
+    destination_root = args.dest
+
+    mv = args.model
+    model, version = mv.split(":")
+
+    digests = extract_digests(source_path, model, version)
+    if digests:
+        print(
+            f"Digest values found in {source_path}/manifests/registry.ollama.ai/library/{model}/{version}:"
+        )
+        copy_blobs(source_path, destination_root, digests)
+        copy_version_and_create_model_folder(source_path, destination_root, model, version)
+    else:
+        print(f"No 'digest' keys found in the JSON file.")
+
+
+if __name__ == "__main__":
+    main()
