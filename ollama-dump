@@ -44,8 +44,8 @@ def list_of_tags(library, model)
 
     next if tag.include?('-q')
     # next if tag.include?('-a')
-    next if tag.include?('-fp')
-    next if tag.include?('-bf')
+    # next if tag.include?('-fp')
+    # next if tag.include?('-bf')
     next if tag.include?('cloud')
 
     hash, size, _ = span.parent.content.gsub(/\s+/, ' ').strip.split(' • ', 3)
